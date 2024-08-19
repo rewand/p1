@@ -1,0 +1,65 @@
+tablas 
+
+categories(id,name,parent_id,regist_status)
+types(bigint,varchar,bigint,char)
+
+feeds(id,name)
+types(bigint,varchar)
+
+document_type(id,name)
+types(bigint,varchar)
+
+animals_feeds(id,animal_id,feed_id)
+types(bigint,bigint,bigint)
+
+caregivers(id,docu_type_id,name,surnames,num_docu,regist_status)
+types(bigint,bigint,varchar,varchar,varchar,char)
+
+animals(id,name,category_id,caregiver_id,photo_1,photo_2,regist_date,regist_status)
+types(bigint,varchar,bigint,bigint,varchar,varchar,date,char)
+
+
+
+
+
+php artisan make:migration create_categories_table
+php artisan make:migration create_document_type_table
+php artisan make:migration create_caregivers_table
+php artisan make:migration create_animals_table
+php artisan make:migration create_feeds_table
+php artisan make:migration create_animals_feeds_table
+
+
+php artisan make:model Category
+php artisan make:model Animal
+php artisan make:model Caregiver
+php artisan make:model DocumentType
+php artisan make:model AnimalsFeed
+php artisan make:model Feed
+
+
+
+php artisan make:controller CategoryController --api
+php artisan make:controller AnimalController --api
+php artisan make:controller CaregiverController --api
+
+
+php artisan make:seeder FeedsTableSeeder
+php artisan make:seeder DocumentTypeTableSeeder
+
+php artisan db:seed --class=FeedsTableSeeder
+php artisan db:seed --class=DocumentTypeTableSeeder
+
+
+
+
+
+
+
+
+php artisan make:model AnimalFeed
+php artisan make:controller AnimalFeedController --api
+
+
+A activo
+I inactivo
