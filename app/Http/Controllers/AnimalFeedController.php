@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Animal;
 use App\Models\AnimalsFeed;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -29,26 +30,43 @@ class AnimalFeedController extends Controller
     // }
 
     // Registrar un nuevo alimento consumido por un animal
-    public function store(Request $request)
+    public function store(Request $request, $animalId)
     {
         DB::beginTransaction(); // Inicia la transacción
         try {
             $request->validate([
-                'animal_id' => 'required|exists:animals,id',
-                'feed_id' => 'required|exists:feeds,id',
+                'feeds' => 'required|array',
+                'feeds.*' => 'required|exists:feeds,id'
+            ], [
+                'exists' => 'El alimento ingresado en :attribute es invalido',
+                'required' => 'El campo :attribute es requerido'
             ]);
-            $animalFeed = AnimalsFeed::create([
-                'animal_id' => $request['animal_id'],
-                'feed_id' => $request['feed_id']
-            ]);
+
+            $animal = Animal::find($animalId);
+
+            if (!$animal)
+                return response()->json(["error" => "El ID del animal ingresado no se encontro"], 404);
+
+            $animal->feeds()->sync($request->feeds);
+            // $feeds = $request->feeds;
+
+            // foreach ($feeds as $feedId) {
+            //     AnimalsFeed::create([
+            //         'animal_id' => $animalId,
+            //         'feed_id' => $feedId
+            //     ]);
+            // }
+
             DB::commit(); // Confirma la transacción
             return response()->json([
-                'message' => 'Alimento registrado con éxito',
+                'message' => 'Alimentos registrado con éxito',
             ], 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['error' => $e->errors()], 400);
         } catch (\Exception $e) {
             DB::rollBack(); // Revierte la transacción en caso de error
             return response()->json([
-                'message' => '' . $e,
+                'error' => '' . $e,
             ], 500);
         }
     }

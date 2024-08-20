@@ -29,4 +29,4 @@ Route::get('/caregivers/{id}', [CaregiverController::class, 'show']); // para ob
 Route::put('/caregivers/{id}', [CaregiverController::class, 'update']); // para actualizar un animal específico
 Route::delete('/caregivers/{id}', [CaregiverController::class, 'delete']); // para eliminar un animal específico
 // // Rutas para AnimalFeedController
-Route::post('/animals.feed', [AnimalFeedController::class, 'store']); // para crear un nuevo animal
+Route::post('/feeds/create/{animals}', [AnimalFeedController::class, 'store']);

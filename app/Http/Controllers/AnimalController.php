@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Animal;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class AnimalController extends Controller
@@ -52,17 +55,43 @@ class AnimalController extends Controller
                 'name' => 'required|string|max:255',
                 'category_id' => 'required|exists:categories,id',
                 'caregiver_id' => 'required|exists:caregivers,id',
-                'photo_1' => 'nullable|string|max:255',
-                'photo_2' => 'nullable|string|max:255',
+                'photo_1' => 'nullable|image|mimes:jpg,png|max:2048',
+                'photo_2' => 'nullable|image|mimes:jpg,png|max:2048',
+            ], [
+                'mimes' => 'El campo :attribute debe ser png o jpg',
+                'image' => 'El campo :attribute debe ser una imagen'
             ]);
             // Crear un nuevo registro de Animal
             $animal = Animal::create([
                 'name' => $request->name,
                 'category_id' => $request->category_id,
                 'caregiver_id' => $request->caregiver_id,
-                'regist_date' => now()->toDateString(), // solo para crear nada mas
+                'regist_date' => now()->toDateString(), // Asigna la fecha actual en formato Y-m-d
             ]);
+
+            $rutaGuardado = storage_path('app/public/animals');
+
+            if (!File::exists($rutaGuardado)) {
+                File::makeDirectory($rutaGuardado, 0755, true);
+            }
+            $fecha = Carbon::now()->format('Y-m-d-H-i-s-u');
+
+            if ($request->photo_1) {
+                $image = $fecha . '-IMG-' . $animal->id . '.' . $request->photo_1->extension();
+                $request->photo_1->storeAs('public/animals', $image);
+                $animal->photo_1 = $image;
+                $animal->save();
+            }
+
+            if ($request->photo_2) {
+                $image = $fecha . '-IMG-' . $animal->id . '.' . $request->photo_2->extension();
+                $request->photo_2->storeAs('public/animals', $image);
+                $animal->photo_2 = $image;
+                $animal->save();
+            }
+
             DB::commit(); // Confirma la transacción
+            // Retornar un mensaje de éxito junto con los campos específicos
             return response()->json([
                 'message' => 'Animal registrado con éxito',
             ], 201);
@@ -78,20 +107,67 @@ class AnimalController extends Controller
     {
         DB::beginTransaction(); // Inicia la transacción
         try {
+            // Buscar el registro de Animal por su ID
             $animal = Animal::find($id);
             $request->validate([
                 'name' => 'required|string|max:255',
                 'category_id' => 'required|exists:categories,id',
                 'caregiver_id' => 'required|exists:caregivers,id',
-                'photo_1' => 'nullable|string|max:255',
-                'photo_2' => 'nullable|string|max:255',
+                'photo_1' => 'nullable|image|mimes:jpg,png|max:2048',
+                'photo_2' => 'nullable|image|mimes:jpg,png|max:2048',
+            ], [
+                'mimes' => 'El campo :attribute debe ser png o jpg',
+                'image' => 'El campo :attribute debe ser una imagen'
             ]);
+
+
+
+            // Actualizar los campos del animal
             $animal->update([
                 'name' => $request->name,
                 'category_id' => $request->category_id,
                 'caregiver_id' => $request->caregiver_id,
+                'regist_date' => now()->toDateString(), // Asigna la fecha actual en formato Y-m-d
             ]);
+
+
+            $rutaGuardado = storage_path('app/public/animals');
+
+            // if (!File::exists($rutaGuardado)) {
+            //     File::makeDirectory($rutaGuardado, 0755, true);
+            // }
+            $fecha = Carbon::now()->format('Y-m-d-H-i-s-u');
+
+            if ($request->photo_1) {
+                // Eliminar la foto anterior si existe
+                if ($animal->photo_1 && File::exists($rutaGuardado . '/' . $animal->photo_1)) {
+                    File::delete($rutaGuardado . '/' . $animal->photo_1);
+                }
+
+                $image = $fecha . '-IMG-' . $animal->id . '.' . $request->photo_1->extension();
+                $request->photo_1->storeAs('public/animals', $image);
+                $animal->photo_1 = $image;
+                $animal->save();
+            }
+
+            if ($request->photo_2) {
+                // Eliminar la foto anterior si existe
+                if ($animal->photo_2 && File::exists($rutaGuardado . '/' . $animal->photo_2)) {
+                    File::delete($rutaGuardado . '/' . $animal->photo_2);
+                }
+
+                $image = $fecha . '-IMG-' . $animal->id . '.' . $request->photo_2->extension();
+                $request->photo_2->storeAs('public/animals', $image);
+                $animal->photo_2 = $image;
+                $animal->save();
+            }
+
+            // Guardar los cambios
+
+
             DB::commit(); // Confirma la transacción
+
+            // Retornar un mensaje de éxito junto con los campos específicos
             return response()->json([
                 'message' => 'Animal actualizado con éxito',
             ], 200);
@@ -103,6 +179,7 @@ class AnimalController extends Controller
             ], 500);
         }
     }
+
     public function delete($id) ///cambiar a delete
     {
         DB::beginTransaction(); // Inicia la transacción
@@ -110,7 +187,7 @@ class AnimalController extends Controller
             $animal = Animal::find($id);
             $animal->update(['regist_status' => 'I']);// Cambiar el estado a inactivo ('I')
             DB::commit(); // Confirma la transacción
-            return response()->json(['message' => 'Animal marcado como inactivo con éxito'], 200);// Retornar un mensaje de éxito
+            return response()->json(['message' => 'Animal marcado como inactivo con éxito'], 204);// Retornar un mensaje de éxito
         } catch (\Exception $e) {
             DB::rollBack(); // Revierte la transacción en caso de error
             return response()->json([
