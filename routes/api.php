@@ -20,7 +20,7 @@ Route::delete('/categories/{id}', [CategoryController::class, 'delete']); // par
 Route::get('/animals', [AnimalController::class, 'get']);
 Route::post('/animals', [AnimalController::class, 'store']); // para crear un nuevo animal
 Route::get('/animals/{id}', [AnimalController::class, 'show']); // para obtener un animal específico
-Route::put('/animals/{id}', [AnimalController::class, 'update']); // para actualizar un animal específico
+Route::post('/animals/{id}', [AnimalController::class, 'update']); // para actualizar un animal específico
 Route::delete('/animals/{id}', [AnimalController::class, 'delete']); // para eliminar un animal específico
 // // Rutas para CaregiverController
 Route::get('/caregivers', [CaregiverController::class, 'get']);
